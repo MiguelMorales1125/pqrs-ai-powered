@@ -20,5 +20,12 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: telematics_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
 volumes:
   postgres_data:
