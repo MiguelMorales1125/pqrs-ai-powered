@@ -1,0 +1,26 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Ticket {
+  id                     String        @id @default(uuid(7))
+  userId                 String        @map("user_id")
+  subject                String
+  description            String
+  category               String?
+  department             String?
+  priority               String?
+  isUrgent               Boolean       @default(false) @map("is_urgent")
+  summary                String?
+  priorityJustification  String?       @map("priority_justification")
+  status                 String        @default("PENDING")
+  createdAt              DateTime      @default(now()) @map("created_at")
+  updatedAt              DateTime      @updatedAt @map("updated_at")
+
+  @@map("tickets")
+}
