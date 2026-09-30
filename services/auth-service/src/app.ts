@@ -8,13 +8,12 @@ import { UserRepository } from './repositories/user.repository';
 import { authRoutes } from './routes/auth.routes';
 import { UserService } from './services/user.service';
 
-export function createApp() {
+export function createApp(userRepository: UserRepository = new UserRepository(prisma)) {
     const app = express();
 
     app.use(cors());
     app.use(express.json());
 
-    const userRepository = new UserRepository(prisma);
     const userService = new UserService(userRepository);
     const userController = new UserController(userService);
 

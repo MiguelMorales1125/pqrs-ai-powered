@@ -18,6 +18,15 @@ npm run dev                   # http://localhost:8001
 
 Production: `npm run build && npm start`.
 
+## Tests
+
+```bash
+npm test            # unit + HTTP tests (Jest + supertest), no database needed
+npm run test:cov    # with coverage report
+```
+
+Tests live in `test/`. The repository is mocked, so the suite runs without PostgreSQL.
+
 ## Endpoints
 
 All routes are prefixed with `/api/v1` (except `/health`).
