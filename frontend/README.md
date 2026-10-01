@@ -1,6 +1,6 @@
 # Frontend
 
-Cliente web para iniciar sesión y ver las PQRS de esa cuenta.
+Cliente web para crear una cuenta, iniciar sesión y ver las PQRS de esa cuenta.
 
 React, Vite, TypeScript y Tailwind.
 
