@@ -4,8 +4,16 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
+import helmet from 'helmet';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Security Headers
+  app.use(helmet());
+  
+  // Graceful shutdown for Docker/K8s
+  app.enableShutdownHooks();
 
   app.enableCors();
   app.setGlobalPrefix('api/v1');
