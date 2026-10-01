@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { ApiError } from './api/client.ts'
 import { login } from './api/auth.ts'
 import { clearSession, loadSession, saveSession, type Session } from './auth/session.ts'
+import { TicketsView } from './tickets/TicketsView.tsx'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(() => loadSession())
@@ -44,12 +45,11 @@ export default function App() {
 
   return (
     <main className="grid min-h-svh place-items-center bg-stone-100 px-4 py-10 text-stone-900">
-      <section className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-        <p className="text-sm font-medium tracking-wide text-teal-800">PQRS</p>
-        {session ? (
-          <SignedIn email={session.user.email} onLogout={logout} />
-        ) : (
-          <>
+      {session ? (
+        <TicketsView userId={session.user.id} email={session.user.email} onLogout={logout} />
+      ) : (
+        <section className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
+          <p className="text-sm font-medium tracking-wide text-teal-800">PQRS</p>
             <h1 className="mt-2 text-2xl font-semibold">Iniciar sesión</h1>
             <p className="mt-1 text-sm text-stone-600">Entra con tu correo y contraseña.</p>
             <form className="mt-6 space-y-4" noValidate onSubmit={onSubmit}>
@@ -93,28 +93,9 @@ export default function App() {
                 {pending ? 'Entrando…' : 'Entrar'}
               </button>
             </form>
-          </>
-        )}
-      </section>
+        </section>
+      )}
     </main>
-  )
-}
-
-function SignedIn({ email, onLogout }: { email: string; onLogout: () => void }) {
-  return (
-    <>
-      <h1 className="mt-2 text-2xl font-semibold">Sesión iniciada</h1>
-      <p className="mt-3 text-sm text-stone-600">
-        Entraste como <span className="font-medium text-stone-900">{email}</span>
-      </p>
-      <button
-        className="mt-6 w-full rounded-lg border border-stone-300 px-3 py-2 font-medium hover:bg-stone-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-800"
-        type="button"
-        onClick={onLogout}
-      >
-        Cerrar sesión
-      </button>
-    </>
   )
 }
 
