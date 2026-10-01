@@ -92,3 +92,8 @@ cd frontend
 - **AI Triage Module**: Groq API (High-speed LPU inference integrated into `pqrs-service`)
 - **Persistence**: Relational Database (PostgreSQL - Database per Service pattern)
 - **Cloud Infrastructure**: Microsoft Azure
+
+---
+
+## 5. Deployment (Azure)
+Both microservices are containerized (`services/*/Dockerfile`) and deployed to **Azure Container Apps** with **Azure Database for PostgreSQL**. See [deploy/azure/README.md](deploy/azure/README.md) for the one-command deployment.
