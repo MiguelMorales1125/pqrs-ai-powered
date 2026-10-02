@@ -1,35 +1,50 @@
-# PQRS Domain Microservice
+# PQRS Service
 
-Domain microservice responsible for:
-- Managing PQRS requests lifecycle (CRUD operations).
-- Ingesting incoming tickets and executing AI-driven triage (categorization, urgency detection, and summarization using Groq).
-- Persisting state with PostgreSQL through Prisma ORM.
+NestJS microservice responsible for the PQRS ticket lifecycle and asynchronous AI triage.
 
-## Local Setup
+## Responsibilities
 
-### 1. Install Dependencies
+- Create and retrieve PQRS tickets.
+- Persist ticket data in the `pqrs_db` PostgreSQL database.
+- Enqueue triage jobs with BullMQ.
+- Process triage jobs with Redis and Groq.
+- Validate Auth Service JWTs at the API boundary.
+
+## Local setup
+
 ```bash
-npm install
-```
-
-### 2. Configure Environment
-Copy `.env.example` to `.env`:
-```bash
+npm ci
 cp .env.example .env
-```
-
-Ensure `DATABASE_URL` and `GROQ_API_KEY` are properly defined.
-
-### 3. Apply Database Migrations
-```bash
-npx prisma migrate dev --name init_tickets
-```
-
-### 4. Run the Service
-```bash
-# Development mode
+npx prisma generate
+npx prisma migrate deploy
 npm run start:dev
 ```
 
-- **API Endpoint:** `http://localhost:8002/api/v1/tickets`
-- **Swagger Documentation:** `http://localhost:8002/docs`
+On Windows, copy `.env.example` to `.env` using File Explorer or PowerShell. Define
+`DATABASE_URL`, `JWT_SECRET`, and `GROQ_API_KEY`. `JWT_SECRET` must be identical to the
+value used by the Auth Service.
+
+The API listens on `http://localhost:8002`. Swagger is available at
+`http://localhost:8002/docs`.
+
+## Authorization
+
+Every ticket endpoint requires an `Authorization: Bearer <token>` header. The service
+validates the token locally and derives the authenticated user from its `sub` claim.
+
+- Regular users can create tickets and read their own tickets.
+- Administrators can list all tickets.
+- Administrators can update ticket status.
+- A client-supplied `userId` is never trusted when creating a ticket.
+
+## Redis and BullMQ
+
+The service uses BullMQ with Redis for asynchronous triage. RabbitMQ is not part of the
+current implementation. Redis is the queue backend required by BullMQ.
+
+## Test and build
+
+```bash
+npm test
+npm run build
+```

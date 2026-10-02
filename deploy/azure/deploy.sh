@@ -148,6 +148,8 @@ properties:
         value: "$ACR_PASS"
       - name: database-url
         value: "$PQRS_DB_URL"
+      - name: jwt-secret
+        value: "$JWT_SECRET"
       - name: groq-api-key
         value: "$GROQ_API_KEY"
   template:
@@ -158,6 +160,8 @@ properties:
         env:
           - { name: PORT, value: "8002" }
           - { name: DATABASE_URL, secretRef: database-url }
+          - { name: JWT_SECRET, secretRef: jwt-secret }
+          - { name: JWT_ALGORITHM, value: "HS256" }
           - { name: GROQ_API_KEY, secretRef: groq-api-key }
           - { name: REDIS_HOST, value: "localhost" }
           - { name: REDIS_PORT, value: "6379" }
