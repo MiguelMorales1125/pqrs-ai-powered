@@ -1,3 +1,5 @@
+import { loadSession } from '../auth/session.ts'
+
 const origins = {
   auth: (import.meta.env.VITE_AUTH_API_URL ?? 'http://localhost:8001').replace(/\/$/, ''),
   pqrs: (import.meta.env.VITE_PQRS_API_URL ?? 'http://localhost:8002').replace(/\/$/, ''),
@@ -35,9 +37,13 @@ export function authRequest<T>(path: string, body: unknown) {
 export async function apiRequest<T>(path: string, options: ApiRequestOptions): Promise<T> {
   let response: Response
   try {
+    const token = loadSession()?.accessToken
     response = await fetch(`${origins[options.service]}${path}`, {
       method: options.method,
-      headers: options.body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      headers: {
+        ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(token === undefined ? {} : { Authorization: `Bearer ${token}` }),
+      },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     })
   } catch {

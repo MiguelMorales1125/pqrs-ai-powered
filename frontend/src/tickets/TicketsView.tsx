@@ -82,7 +82,7 @@ export function TicketsView({ userId, email, onLogout }: TicketsViewProps) {
     setSubmitting(true)
     setFormError('')
     try {
-      const created = await createTicket(userId, nextSubject, nextDescription)
+      const created = await createTicket(nextSubject, nextDescription)
       setSubject('')
       setDescription('')
       setSelectedId(created.id)

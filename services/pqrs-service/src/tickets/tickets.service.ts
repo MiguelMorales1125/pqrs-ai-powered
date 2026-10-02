@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -11,10 +15,10 @@ export class TicketsService {
     @InjectQueue('tickets-triage') private readonly triageQueue: Queue,
   ) {}
 
-  async create(dto: CreateTicketDto) {
+  async create(userId: string, dto: CreateTicketDto) {
     const ticket = await this.prisma.ticket.create({
       data: {
-        userId: dto.userId,
+        userId,
         subject: dto.subject,
         description: dto.description,
       },
@@ -54,14 +58,36 @@ export class TicketsService {
     return ticket;
   }
 
-  async findByUserId(userId: string) {
+  async findOneForUser(id: string, requesterId: string, requesterRole: string) {
+    const ticket = await this.findOne(id);
+    if (ticket.userId !== requesterId && requesterRole !== 'ADMIN') {
+      throw new ForbiddenException('You can only access your own tickets');
+    }
+    return ticket;
+  }
+
+  async findByUserId(
+    userId: string,
+    requesterId: string,
+    requesterRole: string,
+  ) {
+    if (userId !== requesterId && requesterRole !== 'ADMIN') {
+      throw new ForbiddenException('You can only access your own tickets');
+    }
     return this.prisma.ticket.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async updateStatus(id: string, status: string) {
+  async updateStatus(
+    id: string,
+    status: string,
+    requesterRole: string,
+  ) {
+    if (requesterRole !== 'ADMIN') {
+      throw new ForbiddenException('Only administrators can update ticket status');
+    }
     await this.findOne(id);
     return this.prisma.ticket.update({
       where: { id },

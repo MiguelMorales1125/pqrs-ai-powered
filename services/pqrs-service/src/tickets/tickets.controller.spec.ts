@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TicketsController } from './tickets.controller';
 import { TicketsService } from './tickets.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtService } from '@nestjs/jwt';
 
 describe('TicketsController', () => {
   let controller: TicketsController;
@@ -12,6 +14,7 @@ describe('TicketsController', () => {
     findAll: jest.fn(),
     findByUserId: jest.fn(),
     findOne: jest.fn(),
+    findOneForUser: jest.fn(),
     updateStatus: jest.fn(),
   };
 
@@ -22,6 +25,14 @@ describe('TicketsController', () => {
         {
           provide: TicketsService,
           useValue: mockTicketsService,
+        },
+        {
+          provide: JwtAuthGuard,
+          useValue: {},
+        },
+        {
+          provide: JwtService,
+          useValue: {},
         },
       ],
     }).compile();
@@ -36,14 +47,23 @@ describe('TicketsController', () => {
 
   describe('create', () => {
     it('should create a new ticket', async () => {
-      const createDto = { userId: '123', subject: 'Test', description: 'Test desc' };
-      const expectedResult = { id: 'uuid-1', ...createDto, status: 'PENDING', isUrgent: false };
+      const createDto = { subject: 'Test', description: 'Test desc' };
+      const expectedResult = {
+        id: 'uuid-1',
+        userId: '123',
+        ...createDto,
+        status: 'PENDING',
+        isUrgent: false,
+      };
       
       mockTicketsService.create.mockResolvedValue(expectedResult);
 
-      const result = await controller.create(createDto);
+      const result = await controller.create(
+        { user: { sub: '123', email: 'user@example.com', role: 'USER' } } as never,
+        createDto,
+      );
       expect(result).toEqual(expectedResult);
-      expect(mockTicketsService.create).toHaveBeenCalledWith(createDto);
+      expect(mockTicketsService.create).toHaveBeenCalledWith('123', createDto);
     });
   });
 
@@ -52,11 +72,21 @@ describe('TicketsController', () => {
       const tickets = [{ id: '1', subject: 'Test' }];
       mockTicketsService.findAll.mockResolvedValue(tickets);
 
-      const result = await controller.findAll();
+      const result = await controller.findAll({
+        user: { sub: 'admin-1', email: 'admin@example.com', role: 'ADMIN' },
+      } as never);
       expect(result).toEqual({
         data: tickets,
         meta: { pagination: { total: 1 } },
       });
+    });
+
+    it('rejects a non-admin listing all tickets', async () => {
+      await expect(
+        controller.findAll({
+          user: { sub: 'user-1', email: 'user@example.com', role: 'USER' },
+        } as never),
+      ).rejects.toThrow('Only administrators can list all tickets');
     });
   });
 });

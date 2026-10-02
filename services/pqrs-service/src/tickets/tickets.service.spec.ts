@@ -50,15 +50,15 @@ describe('TicketsService', () => {
 
   describe('create', () => {
     it('should create a ticket and add a job to the queue', async () => {
-      const createDto = { userId: '123', subject: 'Test', description: 'Test desc' };
+      const createDto = { subject: 'Test', description: 'Test desc' };
       const expectedTicket = { id: 'uuid-1', ...createDto, status: 'PENDING' };
 
       mockPrismaService.ticket.create.mockResolvedValue(expectedTicket);
 
-      const result = await service.create(createDto);
+      const result = await service.create('123', createDto);
 
       expect(mockPrismaService.ticket.create).toHaveBeenCalledWith({
-        data: createDto,
+        data: { userId: '123', ...createDto },
       });
       expect(mockQueue.add).toHaveBeenCalledWith(
         'triage',
@@ -92,6 +92,27 @@ describe('TicketsService', () => {
       mockPrismaService.ticket.findUnique.mockResolvedValue(null);
 
       await expect(service.findOne('999')).rejects.toThrow('Ticket with ID 999 not found');
+    });
+  });
+
+  describe('findOneForUser', () => {
+    it('rejects access to another user ticket', async () => {
+      mockPrismaService.ticket.findUnique.mockResolvedValue({
+        id: '1',
+        userId: 'owner-1',
+      });
+
+      await expect(
+        service.findOneForUser('1', 'user-2', 'USER'),
+      ).rejects.toThrow('You can only access your own tickets');
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('rejects non-admin status updates', async () => {
+      await expect(
+        service.updateStatus('1', 'RESOLVED', 'USER'),
+      ).rejects.toThrow('Only administrators can update ticket status');
     });
   });
 });
