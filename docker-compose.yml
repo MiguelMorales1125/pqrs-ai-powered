@@ -42,11 +42,12 @@ services:
   pqrs-service:
     profiles: ["app"]
     build: ./services/pqrs-service
+    env_file:
+      - ./services/pqrs-service/.env
     environment:
       DATABASE_URL: postgresql://dev_user:dev_password@postgres:5432/pqrs_db
       JWT_SECRET: local_dev_jwt_secret
       REDIS_HOST: redis
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
       COMPANY_CATEGORIES: PETITION,COMPLAINT,CLAIM,SUGGESTION
       COMPANY_PRIORITIES: LOW,MEDIUM,HIGH,CRITICAL
       COMPANY_DEPARTMENTS: Technical Support,Billing,Customer Care,Legal,Logistics,Network Operations

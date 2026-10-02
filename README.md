@@ -69,8 +69,9 @@ npx prisma migrate deploy
 npm run start:dev
 ```
 
-Set `GROQ_API_KEY` in the environment before starting the PQRS Service if AI triage is
-required. The local Docker Compose profile can also build and run both APIs:
+For direct local execution, set `GROQ_API_KEY` in the PQRS Service environment if AI triage
+is required. Docker Compose loads `services/pqrs-service/.env` automatically; make sure that
+file exists and contains the key before starting the application profile:
 
 ```bash
 docker compose --profile app up --build
