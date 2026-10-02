@@ -1,95 +1,106 @@
-# AI-Powered PQRS Triage and Prioritization System
+# AI-Powered PQRS Triage System
 
-**Telematics Course - Systems Engineering Program**  
-*Universidad de los Llanos (2026-II)*
+Telematics course project for the Systems Engineering Program at Universidad de los Llanos.
 
----
+## Overview
 
-## 1. Project Overview
-Organizations handle large volumes of PQRS (Petitions, Inquiries, Complaints, Claims, and Suggestions). Manual triage often leads to operational bottlenecks, human classification errors, and critical delays in addressing urgent cases.
+This project implements a distributed PQRS platform. Users authenticate through the Auth
+Service, submit requests through the PQRS Service, and receive automated triage based on
+category, department, priority, urgency, and summary.
 
-This project implements an intelligent, distributed system that automates the triage process using Artificial Intelligence. The solution analyzes the sentiment and context of each submission, classifies it into standard regulatory categories, assigns the responsible organizational area, and computes an objective priority score to ensure high-impact issues are escalated immediately.
+## Architecture
 
----
+- **Frontend:** React, Vite, and TypeScript.
+- **Auth Service:** Express, TypeScript, Prisma, PostgreSQL, bcrypt, and JWT.
+- **PQRS Service:** NestJS, Prisma, PostgreSQL, BullMQ, Redis, and Groq.
+- **Persistence:** One PostgreSQL server with separate `auth_db` and `pqrs_db` databases.
+- **Local infrastructure:** Docker Compose.
+- **Cloud deployment:** Azure Container Apps, Azure Database for PostgreSQL, Azure Container
+  Registry, and Redis. See [deploy/azure/README.md](deploy/azure/README.md).
 
-## 2. Architecture Overview
-The system follows a **Microservices Architecture** to ensure decoupling, scalability, and independent deployment cycles. Services communicate over secure **HTTP/REST APIs**:
+The Auth Service issues JWTs. The PQRS Service validates the same JWT locally and derives
+the authenticated user identity from the `sub` claim. Services do not share database tables.
 
-- **Frontend Client**: Web interface for user authentication and PQRS management.
-- **Authentication Service**: Manages user identity, credential verification, and session tokens.
-- **PQRS Domain Service**: Handles the lifecycle of PQRS requests, database persistence, and integrates an **internal AI Triage Module** (powered by Groq) for real-time classification, categorization, and urgency scoring.
-
----
-
-## 3. Repository Structure
+## Repository structure
 
 ```text
 Telematics-Project/
 ├── docker/
-├── docs/
+├── deploy/
+│   └── azure/
 ├── frontend/
-├── services/
-│   ├── auth-service/
-│   └── pqrs-service/
-├── .gitignore
-├── docker-compose.yml
-└── README.md
+└── services/
+    ├── auth-service/
+    └── pqrs-service/
 ```
 
----
+## Prerequisites
 
-## 4. Local Development Setup
+- Git
+- Node.js 22 or a compatible current LTS release
+- Docker Desktop
+- A Groq API key for AI triage
 
-### Prerequisites
-- **Git**
-- **Docker & Docker Compose** (for local databases)
-- **Python 3.11+**
-- **Node.js** (for frontend development)
+## Run locally
 
-### 1. Clone Repository
-```bash
-git clone <repository-url>
-cd Telematics-Project
-```
+Start PostgreSQL and Redis:
 
-### 2. Start Local Databases (Docker)
-This starts a PostgreSQL instance and automatically provisions independent databases (`auth_db` and `pqrs_db`):
 ```bash
 docker compose up -d
 ```
 
-### 3. Start the Authentication Microservice
+Install dependencies and start the Auth Service:
+
 ```bash
 cd services/auth-service
-# Follow configuration instructions in services/auth-service/README.md
-```
-
-### 4. Start the PQRS Domain Microservice
-```bash
-cd services/pqrs-service
-python -m venv venv
-
-# Windows:
-.\venv\Scripts\activate
-# Linux/macOS:
-source venv/bin/activate
-
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8002
-```
-
-### 5. Start the Frontend Client
-```bash
-cd frontend
-npm install
+npm ci
+npx prisma generate
+npx prisma migrate deploy
 npm run dev
 ```
 
----
+In another terminal, start the PQRS Service:
 
-## 5. Technology Stack
-- **Frontend**: React, Vite, TypeScript, Tailwind CSS
-- **Microservices Backend**: Python (FastAPI), Pydantic
-- **AI Triage Module**: Groq API (High-speed LPU inference integrated into `pqrs-service`)
-- **Persistence**: Relational Database (PostgreSQL - Database per Service pattern)
-- **Cloud Infrastructure**: Microsoft Azure
+```bash
+cd services/pqrs-service
+npm ci
+npx prisma generate
+npx prisma migrate deploy
+npm run start:dev
+```
+
+For direct local execution, set `GROQ_API_KEY` in the PQRS Service environment if AI triage
+is required. Docker Compose loads `services/pqrs-service/.env` automatically; make sure that
+file exists and contains the key before starting the application profile:
+
+```bash
+docker compose --profile app up --build
+```
+
+Start the frontend in another terminal:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+## Test and build
+
+```bash
+cd services/auth-service && npm test && npm run build
+cd ../pqrs-service && npm test && npm run build
+cd ../../frontend && npm run build
+```
+
+## API endpoints
+
+The Auth Service listens on `http://localhost:8001` and the PQRS Service listens on
+`http://localhost:8002`.
+
+- Auth API: `http://localhost:8001/api/v1`
+- PQRS API: `http://localhost:8002/api/v1/tickets`
+- PQRS Swagger: `http://localhost:8002/docs`
+
+Ticket endpoints require `Authorization: Bearer <token>`. Regular users can create and
+read their own tickets. Administrators can list all tickets and update ticket status.

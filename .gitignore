@@ -49,3 +49,7 @@ docs/*.pdf
 
 .agents/
 skills-lock.json
+
+# Azure deployment secrets
+deploy/azure/config.env
+coverage/

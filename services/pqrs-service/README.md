@@ -1,47 +1,50 @@
-# PQRS Domain Microservice
+# PQRS Service
 
-Domain microservice responsible for:
-- Managing PQRS requests lifecycle (CRUD operations).
-- Ingesting incoming tickets and executing AI-driven triage (categorization, urgency detection, and summarization using Groq).
-- Persisting state with PostgreSQL through Prisma ORM.
+NestJS microservice responsible for the PQRS ticket lifecycle and asynchronous AI triage.
 
-## Local Setup
+## Responsibilities
 
-### 1. Install Dependencies
+- Create and retrieve PQRS tickets.
+- Persist ticket data in the `pqrs_db` PostgreSQL database.
+- Enqueue triage jobs with BullMQ.
+- Process triage jobs with Redis and Groq.
+- Validate Auth Service JWTs at the API boundary.
+
+## Local setup
+
 ```bash
-npm install
-```
-
-### 2. Configure Environment
-Copy `.env.example` to `.env`:
-```bash
+npm ci
 cp .env.example .env
-```
-
-Ensure `DATABASE_URL`, `JWT_SECRET`, and `GROQ_API_KEY` are properly defined.
-`JWT_SECRET` must match the Auth Service value. The frontend sends the JWT returned by
-the Auth Service in `Authorization: Bearer <token>` when calling this service.
-
-### 3. Apply Database Migrations
-```bash
-npx prisma migrate dev --name init_tickets
-```
-
-### 4. Run the Service
-```bash
-# Development mode
+npx prisma generate
+npx prisma migrate deploy
 npm run start:dev
 ```
 
-- **API Endpoint:** `http://localhost:8002/api/v1/tickets`
-- **Swagger Documentation:** `http://localhost:8002/docs`
+On Windows, copy `.env.example` to `.env` using File Explorer or PowerShell. Define
+`DATABASE_URL`, `JWT_SECRET`, and `GROQ_API_KEY`. `JWT_SECRET` must be identical to the
+value used by the Auth Service.
 
-### Authorization
+The API listens on `http://localhost:8002`. Swagger is available at
+`http://localhost:8002/docs`.
 
-All ticket endpoints require `Authorization: Bearer <token>`. The Auth Service
-issues the JWT and this service validates it locally with the same `JWT_SECRET`.
-Regular users can create and read their own tickets. Only `ADMIN` users can
-list all tickets or update ticket status.
+## Authorization
 
-The triage worker uses BullMQ with Redis. RabbitMQ is not required by the
-current implementation.
+Every ticket endpoint requires an `Authorization: Bearer <token>` header. The service
+validates the token locally and derives the authenticated user from its `sub` claim.
+
+- Regular users can create tickets and read their own tickets.
+- Administrators can list all tickets.
+- Administrators can update ticket status.
+- A client-supplied `userId` is never trusted when creating a ticket.
+
+## Redis and BullMQ
+
+The service uses BullMQ with Redis for asynchronous triage. RabbitMQ is not part of the
+current implementation. Redis is the queue backend required by BullMQ.
+
+## Test and build
+
+```bash
+npm test
+npm run build
+```
