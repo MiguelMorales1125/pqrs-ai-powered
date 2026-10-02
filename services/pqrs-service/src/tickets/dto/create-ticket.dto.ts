@@ -2,11 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateTicketDto {
-  @ApiProperty({ example: 'usr_01J8G...' })
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
-
   @ApiProperty({ example: 'Prolonged fiber outage in Sector 4' })
   @IsString()
   @IsNotEmpty()

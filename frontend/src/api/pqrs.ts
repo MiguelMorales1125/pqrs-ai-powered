@@ -15,11 +15,11 @@ export type Ticket = {
   createdAt: string
 }
 
-export function createTicket(userId: string, subject: string, description: string) {
+export function createTicket(subject: string, description: string) {
   return apiRequest<unknown>('/api/v1/tickets', {
     service: 'pqrs',
     method: 'POST',
-    body: { userId, subject, description },
+    body: { subject, description },
   }).then(requireTicket)
 }
 
